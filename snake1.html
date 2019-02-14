@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+
+
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Arcanoid</title>
+
+</head>
+
+
+
+
+<style>
+html, body 
+{
+padding: 0;margin: 0;
+}
+* {
+box-sizing: border-box;
+}
+
+body 
+{
+background: #ddd;
+padding: 50px;
+}
+
+
+</style>
+
+<body>
+
+<canvas id="layer1" width="1280" height="720" style="margin: 0 auto; position: absolute; background: gray; z-index: 1;"></canvas>
+<canvas id="layer2" width="1280" height="720" style="margin: 0 auto; position: absolute; background: gray; z-index: 0;"></canvas>
+
+<script>
+//Pet-project арканоида, с использованием HTML, JS, Photoshop +)
+
+window.onload = function() 
+{
+  //заливаем canvas нужным цветом
+  fillcanvas(); 
+  //заполняем поле блоков
+  makefield2();
+  
+  createCoords1();
+  //var intervalHandle0 = setTimeout(fillcanvas,10,makefield);
+  intervalHandle1 = setTimeout(makefield2,100); // вызов функции выстраивания поля из рандомных блоков (фруктов) только один раз, при загрузке
+  var intervalHandle2 = setInterval(plate, 40); // тарелка, отбивающая, функция вызывается интервально
+  var intervalHandle3 = setInterval(ball, 20); // шар, сбивающий блоки, функция вызывается интервально
+  //если в активном окне нажата какая то кнопка, то...(проверка и вызов функции)
+  document.onkeydown = checkKey;
+  
+   
+   
+}
+
+  
+
+var
+  canv 				= document.getElementById('layer1'), // 
+  canv1				= document.getElementById('layer2'), //
+  ctx					= canv.getContext('2d'), // 2d context
+  gs = fkp			= false, // game started && first key pressed (initialization states)
+  speed = baseSpeed 	= 3, // snake movement speed
+  xv = yv				= 0, // velocity (x & y)
+  px 					= ~~(canv.width) / 2, // player X position
+  py 					= ~~(canv.height) / 2, // player Y position
+  pw = ph				= 20, // player size
+  aw = ah				= 20, // apple size
+  cooldown			= false, // is key in cooldown mode
+  score				= 0; // current score
+ 
+  
+ function fillcanvas()
+ {
+ ctx.fillStyle = 'black'; //выбираем цвет заливки и заливаем поле "canvasa" пунктом ниже
+ ctx.fillRect(0, 0, canv.width, canv.height);
+  }
+  
+  
+  
+// game main loop
+function loop()
+{
+  // logic
+  plate();
+  setTimeout(function() {cooldown = false;}, 500);
+ 
+ 
+   
+}
+
+//дополнительные переменные для перемещения платформы-тарелки
+var xpos=532, ypos=635, xbpos=0, ybpos=0;
+var keydownflag=0;
+
+
+// прописываем обработку события нажатия на кнопку влево\вправо
+function checkKey(e) 
+{
+
+    e = e || window.event;
+
+    if (e.keyCode == '38')
+	{
+        // кнопка "вверх"
+		//createCoords();
+	}
+    else if (e.keyCode == '40') 
+	{
+        //кнопка "вниз"
+		//отрабатываем функцию запуска шара
+		//releaseball();
+		keydownflag = 1;
+    }
+    else if (e.keyCode == '37') 
+	{
+		//кнопка "влево"
+		if (xpos-50 > 0) //если тарелка не уходит за границы холста
+		{
+	    xpos=xpos-25; //задаем перемещене тарелки влево
+	    }
+		else //иначе сохраняем предыдущую координату
+		{
+		xpos=xpos;
+		}
+		
+    }
+    else if (e.keyCode == '39') 
+	{
+		//кнопка "вправо"
+		if (xpos+100 < canv.width) //если тарелка не уходит за границы холста
+		{
+	    xpos=xpos+25; //задаем перемещение тарелки вправо
+		}
+		else //иначе сохраняем предыдущую координату
+		{
+		xpos=xpos;
+		}
+    }
+
+}
+
+			
+		
+		
+
+function plate() //создаем саму "тарелку" арканоида и позиционируем шар на эту тарелку
+		{
+		// Создаем объекты изображений
+		var img = new Image();
+		//var img1 = new Image();
+		// Загружаем файлы изображений
+		img.src = 'img/plate.png';
+		//img1.src = 'img/blueball.png';
+		// Привязываем функцию к событию onload
+		ctx.fillStyle = 'black';
+				
+		
+		// Это указывает браузеру, что делать, когда изображение загружено
+		img.onload = function() 
+			{
+			//реализуем удаление старого изображения "тарелки" путем закрашивания
+			ctx.fillRect(xpos+15-65, ypos+15-60, xpos+15+98, ypos+15+60);
+			//задаем добавочные данные для сдвига и рисуем тарелку
+			ctx.drawImage(img, xpos, ypos);
+			}
+		}
+
+//переменные для новых координат шара (после запуска)		
+var xpos1;
+var ypos1;		
+		
+		
+function ball() //для отрисовки выбивающего шара создаем отдельную функцию
+{
+		// Создаем объект изображения шара
+		var img1 = new Image();
+				
+		// Загружаем файлы изображений шара
+		img1.src = 'img/blueball.png';
+		//пока не выставлен флаг keydownflag устанавливаем шар на тарелку
+		if (keydownflag==0)
+		{
+		xpos1=xpos+38; 
+		ypos1=ypos-6;
+		}
+		else if (keydownflag==1)
+		{
+			//если нажата кнопка запуска шара, интервалльно вызываем функцию движения шара
+			setInterval(ballmove, 270);
+							
+		}
+		// Привязываем функцию к событию onload
+		// Это указывает браузеру, что делать, когда изображение загружено
+		img1.onload = function() 
+			{
+			//реализуем удаление старого изображения "тарелки" путем закрашивания
+			ctx.fillStyle = 'black';
+			//ctx.fillRect(xpos1+550-98, ypos1+650-60, xpos1+550+98, ypos1+650+60);
+			
+			//задаем добавочные данные для сдвига и рисуем площадку-тарелку 
+			ctx.drawImage(img1,xpos1,ypos1);
+			};
+
+}		
+
+
+//функция реализует движения шара после отрыва от тарелки		
+function ballmove()
+{	
+	ctx.fillStyle = 'black';
+	xpos1=xpos1+15;
+	ypos1=ypos1-15;
+	ctx.fillRect(xpos1-15, ypos1+15, 20, 20);
+	//img1.onload = function() 
+	//{
+	//ctx.fillRect(xpos1-15, ypos1+15, 30, 30);
+	//ctx.fillRect(0, 0, 1280, 720);
+	img1.translate(xpos1,ypos1);
+	
+	//начинаем проверку массива на столкновениие
+	for(var i=0;i<140;i++)
+	{
+	if (xpos1 = blockcoordsx[i])
+		{
+		ctx.fillRect(xpos1, ypos1-49, 49, 49);
+		}
+	
+	}
+	//закрашиваем старый шар
+	//}	
+   
+}		
+	
+//пока нет столкновения с блоками
+var collision = false; 
+	
+function releaseball()
+{
+
+var img2 = new Image();
+img2.src = 'img/blueball2.png';
+var xr=200;
+alert(loaded);
+
+img2.onload = function()
+{
+   alert(Go);
+   setInterval(motion, 1000/30);
+
+} 
+
+//реализуем функцию движения шара
+function motion() 
+{
+    ctx.drawImage(img2, 250, 250); // выводим картинку по координатам 
+	alert(xr);
+    xr++; // увеличиваем координату X
+
+}
+
+}
+
+
+			
+var blocksprecache = //создаем массив из функций блоков заполнения для дальнейшего прекеширования изображение
+[
+
+
+ function plum(xpp,ypp) //создаем блок заполнения "слива"
+	{
+
+	var plum = new Image();
+	// Загружаем файл изображения
+	plum.src = 'img/plum.png';
+
+	},
+
+
+
+ function orange(xpp,ypp) //создаем блок заполнения "апельсин"
+	{
+	var orange = new Image();
+	// Загружаем файл изображения
+	orange.src = 'img/orange1.png';
+	},
+
+
+ function apple(xpp,ypp) //создаем блок заполнения "яблоко"
+	{
+	var apple = new Image();
+	// Загружаем файл изображения
+	apple.src = 'img/apple.png';
+	}
+
+]
+
+
+function precache()
+{
+blocksprecache[1]();
+blocksprecache[2]();
+blocksprecache[3]();
+}
+
+//обработка движения отбивающей тарелки
+
+
+
+
+
+var blocks = //создаем массив из функций блоков заполнения
+[
+
+
+ function plum(xpp,ypp) //создаем блок заполнения "слива"
+	{
+
+	var plum = new Image();
+	 //Загружаем файл изображения
+	plum.src = 'img/plum.png';
+	 //Привязываем функцию к событию onload
+	 //Это указывает браузеру, что делать, когда изображение загружено
+	plum.onload = function() 
+	{
+	ctx.drawImage(plum, xpp, ypp);
+	};
+ 
+	},
+
+
+
+ function orange(xpp,ypp) //создаем блок заполнения "апельсин"
+	{
+	var orange = new Image();
+	 //Загружаем файл изображения
+	orange.src = 'img/orange1.png';
+	 //Привязываем функцию к событию onload
+	 //Это указывает браузеру, что делать, когда изображение загружено
+	orange.onload = function() 
+	{
+	ctx.drawImage(orange, xpp, ypp);
+	};
+ 	},
+
+
+ function apple(xpp,ypp) //создаем блок заполнения "яблоко"
+	{
+	var apple = new Image();
+	 //Загружаем файл изображения
+	apple.src = 'img/apple.png';
+	 //Привязываем функцию к событию onload
+	 //Это указывает браузеру, что делать, когда изображение загружено
+	apple.onload = function() 
+	{
+	ctx.drawImage(apple, xpp, ypp);
+	};
+ 	}
+
+]
+
+var min1 = 0, max1 = 500;
+var xp;
+function getRandomInt1(min1, max1)
+{
+  return xp = Math.floor(Math.random() * (max1 - min1 + 1)) + min1;
+}
+
+
+var min2 = 0, max2 = 500;
+var yp;
+function getRandomInt2(min2, max2)
+{
+  return  yp = Math.floor(Math.random() * (max2 - min2 + 1)) + min2;
+}
+
+
+
+
+
+
+//СОЗДАЕМ СТАТИЧНЫЕ МАССИВЫ КООРДИНАТ БЛОКОВ
+var blockscoordsx = [];
+var blockscoordsy = [];
+var l;
+
+
+function createCoords1() //ФУНКЦИЯ ЗАПОЛНЕНИЯ МАССИВА КООРДИНАТАМИ БЛОКОВ
+{
+
+for (l=0;l<29;l++) //ДЛЯ ПЕРВОГО РЯДА
+	{
+	   	blockscoordsx.push(l*48);
+		blockscoordsy.push(10);
+	}	
+	
+for (l>=29;l<57;l++) //ДЛЯ ВТОРОГО РЯДА
+	{
+	   	blockscoordsx.push((l*48)-1372);
+		blockscoordsy.push(20);
+	}	
+		
+	
+	//alert( blockscoordsx.length );	
+}
+
+
+
+
+function createCoords()
+{
+for (l=0;l<140;l++) //заполняем линейный одномерный массив
+{
+
+if (l<29) //для перевого ряда блоков 
+{
+blockcoordsx.push(l*48); 
+blockcoordsy.push(10); 
+}
+
+else if(l>28 && l<57) //для второго ряда блоков
+{
+blockcoordsx.push((l*48)-1372); 
+blockcoordsy.push(59); 
+}
+
+else if(l>57 && l<85) //для третьего ряда блоков 
+{
+blockcoordsx.push((l*48)-2744); 
+blockcoordsy.push(59); 
+}
+
+
+else if(l>85 && l<113) //для четвертого ряда блоков
+{
+blockcoordsx.push((l*48)-4116); 
+blockcoordsy.push(59); 
+}
+
+
+else if(l>28 && l<140) //для пятого ряда блоков
+{
+blockcoordsx.push((l*48)-5488); 
+blockcoordsy.push(59); 
+}
+
+
+}
+alert( blockscoordsx.length );
+}
+
+
+
+
+function makefield2() //альтернативная функция для заполнения линии блоков 
+{
+    var blocks2 =[]; //массив переменных содержащих изображения сливы, апельсина, яблока
+	
+	
+    var apple2 = new Image();
+	apple2.src = 'img/apple.png';
+	blocks2.push(apple2);
+	
+	
+	var plum2 = new Image();
+	plum2.src = 'img/plum.png';
+	blocks2.push(plum2);	
+	
+	var orange2 = new Image();
+	orange2.src = 'img/orange1.png';
+	blocks2.push(orange2);
+	
+	
+	
+	function randomblock(min, max) //генерирует значение (псевдо)случайного блока для заполнения в поле блоков
+    {
+    min = 0; 
+    max = 2; 
+	rand = min - 0.5 + Math.random() * (max - min + 1)
+    return rand = Math.round(rand);
+    }
+	
+	
+  var i; //непосредственно начинаем цикл заполнения поля блоками
+  for (i=0; i<28; i++) //по ширине экрана вмещается 28 блоков стандартного размера 49*49
+  {
+     ctx.drawImage(blocks2[randomblock()],i*45,30); //создаем случайный блок первого 1-го ряда..
+	 ctx.drawImage(blocks2[randomblock()],i*45,80);
+	 ctx.drawImage(blocks2[randomblock()],i*45,140);
+	 ctx.drawImage(blocks2[randomblock()],i*45,190);
+	 ctx.drawImage(blocks2[randomblock()],i*45,250);
+  }
+	
+}
+
+
+
+
+
+
+
+function makefield() //функция создания поля блоков случайного заполнения c колбеком чтобы поле успевало заполняться
+{
+  //getRandomInt1(0,300);
+  //getRandomInt2(0,300);
+  //создаем цикл заполнения canvasa блоками
+  var i;
+  for (i=0; i<20; i++)
+  {
+	
+     blocks[randomblock()](i*45,30);
+	 blocks[randomblock()](i*45,75);
+	 blocks[randomblock()](i*45,120);
+	 blocks[randomblock()](i*45,165);
+  }
+  
+}
+
+
+</script>
+</body>
